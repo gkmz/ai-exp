@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="zh">
+  <head>
+    <meta charset="UTF-8" />
+    <title>SSE 流式输出 Demo</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: 720px;
+        margin: 60px auto;
+        padding: 0 20px;
+      }
+      #output {
+        white-space: pre-wrap;
+        background: #f6f8fa;
+        border-radius: 8px;
+        padding: 16px;
+        min-height: 120px;
+        line-height: 1.8;
+        font-size: 15px;
+      }
+      input {
+        width: 100%;
+        padding: 10px;
+        font-size: 15px;
+        box-sizing: border-box;
+        margin-bottom: 10px;
+      }
+      button {
+        padding: 10px 24px;
+        font-size: 15px;
+        cursor: pointer;
+      }
+      #status {
+        color: #888;
+        font-size: 13px;
+        margin-top: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>打字机效果 Demo（SSE）</h2>
+    <input
+      id="question"
+      type="text"
+      placeholder="输入你的问题..."
+      value="用三句话解释什么是量子纠缠"
+    />
+    <button onclick="ask()">发送</button>
+    <div id="status"></div>
+    <div id="output"></div>
+
+    <script>
+      let es = null;
+
+      function ask() {
+        // 如果上一个连接还在，先关掉
+        if (es) es.close();
+
+        const q = document.getElementById("question").value.trim();
+        if (!q) return;
+
+        const output = document.getElementById("output");
+        const status = document.getElementById("status");
+        output.textContent = "";
+        status.textContent = "连接中...";
+
+        // EventSource 自动处理重连，传参通过 URL query
+        es = new EventSource(`/stream?q=${encodeURIComponent(q)}`);
+
+        es.onopen = () => {
+          status.textContent = "已连接，等待响应...";
+        };
+
+        // 收到服务端的消息处理函数
+        es.onmessage = (e) => {
+          if (e.data === "[DONE]") {
+            status.textContent = "完成";
+            es.close();
+            return;
+          }
+          try {
+            const { content } = JSON.parse(e.data);
+            output.textContent += content;
+          } catch (e) {
+            console.log("error: ", e);
+          }
+        };
+
+        es.addEventListener("error", (e) => {
+          // 服务端发的 event: error
+          status.textContent = `出错：${e.data || "连接断开"}`;
+          es.close();
+        });
+
+        // 原生 onerror 处理网络层错误
+        es.onerror = () => {
+          if (es.readyState === EventSource.CLOSED) {
+            status.textContent = "连接已关闭";
+          }
+        };
+      }
+    </script>
+  </body>
+</html>
