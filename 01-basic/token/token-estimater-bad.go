@@ -5,8 +5,10 @@ import (
 	"regexp"
 )
 
+type BadTokenEstimater struct{}
+
 // 计算Token数量（适配DeepSeek切割规则）
-func countTokens(text string) int {
+func (te *BadTokenEstimater) countTokens(text string) int {
 	if text == "" {
 		return 0
 	}
@@ -35,7 +37,7 @@ func countTokens(text string) int {
 // model: 模型名称（deepseek-coder-v2 / deepseek-chat）
 // inputTokens: 输入Token数
 // outputTokens: 预估输出Token数
-func calculateCost(model string, inputTokens, outputTokens int) float64 {
+func (te *BadTokenEstimater) calculateCost(model string, inputTokens, outputTokens int) float64 {
 	var inputPrice, outputPrice float64
 
 	// 按DeepSeek官方定价设置单价（元/1000个Token）
@@ -59,14 +61,13 @@ func calculateCost(model string, inputTokens, outputTokens int) float64 {
 	return totalCost
 }
 
-func main() {
+func (te *BadTokenEstimater) run(text string) {
 	// 实操测试：输入一段文本，计算Token数并估算成本
-	testText := "开发者使用DeepSeek API生成Go语言HTTP请求代码，要求简洁可运行。"
-	tokens := countTokens(testText)
-	fmt.Printf("输入文本：%s\n", testText)
+	tokens := te.countTokens(text)
+	fmt.Printf("输入文本：%s\n", text)
 	fmt.Printf("DeepSeek Token数：%d\n", tokens)
 
 	// 估算调用成本（以deepseek-coder-v2为例，预估输出Token数为100）
-	cost := calculateCost("deepseek-coder-v2", tokens, 100)
+	cost := te.calculateCost("deepseek-coder-v2", tokens, 100)
 	fmt.Printf("预估API调用成本：%.6f元\n", cost)
 }
