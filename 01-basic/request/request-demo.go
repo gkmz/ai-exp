@@ -7,11 +7,26 @@ import (
 	"io"
 	"net/http"
 	"os"
+
+	openai "github.com/sashabaranov/go-openai"
 )
 
-func main() {
-	// apiKey := "YOUR_DEEPSEEK_API_KEY"
-	//
+// RequestDemo 封装请求功能
+type RequestDemo struct{}
+
+type customChatCompletionResponse struct {
+	openai.ChatCompletionResponse
+	Choices []struct {
+		openai.ChatCompletionChoice
+		Message struct {
+			openai.ChatCompletionMessage
+			ReasoningContent string `json:"reasoning_content"` // 扩展字段
+		} `json:"message"`
+	} `json:"choices"`
+}
+
+// Run 运行请求演示
+func (d *RequestDemo) Run() {
 	apiKey := os.Getenv("DEEPSEEK_API_KEY")
 	if apiKey == "" {
 		panic("You need an apiKey at first.")
@@ -39,5 +54,10 @@ func main() {
 	defer resp.Body.Close()
 
 	respBody, _ := io.ReadAll(resp.Body)
-	fmt.Println(string(respBody))
+	var customChatCompletionResponse customChatCompletionResponse
+	if err := json.Unmarshal(respBody, &customChatCompletionResponse); err != nil {
+		fmt.Println("解析失败:", err)
+		return
+	}
+	fmt.Println(customChatCompletionResponse.Choices[0].Message.ChatCompletionMessage)
 }

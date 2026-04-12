@@ -10,31 +10,35 @@ import (
 	"strings"
 )
 
-// Message 定义对话消息结构
+// ChatHistoryDemo 封装聊天历史功能
+type ChatHistoryDemo struct{}
+
+// Message 请求和响应消息结构
 type Message struct {
 	Role    string `json:"role"`
 	Content string `json:"content"`
 }
 
-// ChatRequest API 请求结构
-type ChatRequest struct {
+// chatRequest API 请求结构
+type chatRequest struct {
 	Model    string    `json:"model"`
 	Messages []Message `json:"messages"`
 }
 
-// ChatResponse API 响应结构
-type ChatResponse struct {
+// chatResponse API 响应结构
+type chatResponse struct {
 	Choices []struct {
 		Message Message `json:"message"`
 	} `json:"choices"`
 }
 
 const (
-	API_URL     = "https://api.deepseek.com/v1/chat/completions" // 或其他代理地址
-	MAX_HISTORY = 10                                             // 最大保留历史轮数
+	apiURL     = "https://api.deepseek.com/v1/chat/completions" // 或其他代理地址
+	maxHistory = 10                                             // 最大保留历史轮数
 )
 
-func main() {
+// Run 运行聊天历史演示
+func (d *ChatHistoryDemo) Run() {
 	// 1. 初始化对话历史，加入 System Prompt
 	history := []Message{
 		{Role: "system", Content: "你是一个专业的编程助手，请用简洁明了的语言回答问题。"},
@@ -58,9 +62,9 @@ func main() {
 		history = append(history, Message{Role: "user", Content: input})
 
 		// 3. 控制历史长度：如果超过限制，删除最早的对话（保留 system）
-		if len(history) > MAX_HISTORY {
+		if len(history) > maxHistory {
 			fmt.Println("对话太长了，取最后10轮")
-			history = append(history[:1], history[len(history)-MAX_HISTORY+1:]...)
+			history = append(history[:1], history[len(history)-maxHistory+1:]...)
 		}
 
 		// 4. 发起 API 请求
@@ -77,14 +81,14 @@ func main() {
 }
 
 func fetchAIResponse(messages []Message) (Message, error) {
-	reqBody := ChatRequest{
+	reqBody := chatRequest{
 		Model:    "deepseek-chat",
 		Messages: messages,
 	}
 
 	apiKey := os.Getenv("DEEPSEEK_API_KEY")
 	jsonData, _ := json.Marshal(reqBody)
-	req, _ := http.NewRequest("POST", API_URL, bytes.NewBuffer(jsonData))
+	req, _ := http.NewRequest("POST", apiURL, bytes.NewBuffer(jsonData))
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+apiKey)
 
@@ -95,7 +99,7 @@ func fetchAIResponse(messages []Message) (Message, error) {
 	}
 	defer resp.Body.Close()
 
-	var result ChatResponse
+	var result chatResponse
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		return Message{}, err
 	}

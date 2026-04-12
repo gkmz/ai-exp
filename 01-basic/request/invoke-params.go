@@ -10,68 +10,67 @@ import (
 	"time"
 )
 
-// 定义请求体结构（适配DeepSeek 2026年最新API规范）
-type DeepSeekRequest struct {
+// InvokeParamsDemo 封装调用参数功能
+type InvokeParamsDemo struct{}
+
+// deepSeekRequest 定义请求体结构（适配DeepSeek 2026年最新API规范）
+type deepSeekRequest struct {
 	Model            string          `json:"model"`                       // 必选，模型参数值
 	Temperature      *float64        `json:"temperature,omitempty"`       // 控制随机性，默认0.6
 	MaxTokens        *int            `json:"max_tokens,omitempty"`        // 模型单次回答的最大长度（含思维链输出），默认为 32K，最大为 64K。
 	TopP             *float64        `json:"top_p,omitempty"`             // 控制聚焦度，默认0.6
 	PresencePenalty  *float64        `json:"presence_penalty,omitempty"`  // 存在惩罚，控制重复率
 	FrequencyPenalty *float64        `json:"frequency_penalty,omitempty"` // 频率惩罚，控制重复率
-	ResponseFormat   *ResponseFormat `json:"response_format,omitempty"`   // 输出格式
+	ResponseFormat   *responseFormat `json:"response_format,omitempty"`   // 输出格式
 	Messages         []Message       `json:"messages"`
 }
 
-type ResponseFormat struct {
+type responseFormat struct {
 	Type string `json:"type"`
 }
 
-type Message struct {
-	Role    string `json:"role"`
-	Content string `json:"content"`
-}
-
-// 定义响应体结构
-type DeepSeekResponse struct {
+// deepSeekResponse 定义响应体结构
+type deepSeekResponse struct {
 	Id                string   `json:"id"`
 	Object            string   `json:"object"`
 	Created           int64    `json:"created"`
 	Model             string   `json:"model"`
-	Choices           []Choice `json:"choices"`
-	Usage             Usage    `json:"usage"`
+	Choices           []choice `json:"choices"`
+	Usage             usage    `json:"usage"`
 	SystemFingerPrint string   `json:"system_finger_print"`
 }
 
-type Choice struct {
+type choice struct {
 	Index   int         `json:"index"`
-	Message RespMessage `json:"message"`
+	Message respMessage `json:"message"`
 }
 
-type RespMessage struct {
+type respMessage struct {
 	Role         string `json:"role"`
 	Content      string `json:"content"`
 	LogProbs     any    `json:"logprobs"`
 	FinishReason string `json:"finish_reason"`
 }
 
-type Usage struct {
+type usage struct {
 	PromptTokens           int                `json:"prompt_tokens"`
 	CompletionTokens       int                `json:"completion_tokens"`
 	TotalTokens            int                `json:"total_tokens"`
-	PromptTokenDetails     PromptTokenDetails `json:"prompt_token_details"`
+	PromptTokenDetails     promptTokenDetails `json:"prompt_token_details"`
 	PromptCacheHitTokens   int                `json:"prompt_cache_hit_tokens"`
 	PrommptCacheMissTokens int                `json:"prompt_cache_miss_tokens"`
 }
 
-type PromptTokenDetails struct {
+type promptTokenDetails struct {
 	CachedTokens int `json:"cached_tokens"`
 }
 
 func ptr[T ~float64 | ~int | ~string](r T) *T { return &r }
 
-func main() {
+// Run 运行调用参数演示
+func (d *InvokeParamsDemo) Run() {
 	// 1. 配置核心参数（适配deepseek-v3.2模型，2026最新设置）
-	requestBody := DeepSeekRequest{
+	requestBody := deepSeekRequest{
 		Model:            "deepseek-chat", // 选择2026年主推模型
 		Temperature:      ptr(0.4),        // 技术文档生成，低随机性
 		MaxTokens:        ptr(1024),       // 输出长度限制，结合上下文窗口设置
@@ -82,7 +81,7 @@ func main() {
 			{Role: "system", Content: ""},
 			{Role: "user", Content: "生成一篇Go语言调用DeepSeek大模型的技术文档，重点讲解核心参数配置"},
 		},
-		// ResponseFormat: ResponseFormat{Type: "json_object"},
+		// ResponseFormat: responseFormat{Type: "json_object"},
 	}
 
 	// 2. 转换请求体为JSON格式
@@ -124,7 +123,7 @@ func main() {
 
 	// 6. 解析响应结果
 	r := bytes.NewReader(bs)
-	var response DeepSeekResponse
+	var response deepSeekResponse
 	if err := json.NewDecoder(r).Decode(&response); err != nil {
 		fmt.Printf("响应解析失败：%v\n", err)
 		return
