@@ -7,8 +7,9 @@ type Demo interface {
 
 func main() {
 	var d Demo
-	d = &RequestDemo{}
+	// d = &RequestDemo{}
 	// d = &InvokeParamsDemo{}
 	// d = &ChatHistoryDemo{}
+	d = &RequestBootstrapDemo{}
 	d.Run()
 }
