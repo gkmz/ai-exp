@@ -74,7 +74,7 @@ func (m *Model) makeDeepSeekRequest(prompt string) tea.Cmd {
 		resp, err := m.client.CreateChatCompletion(
 			context.Background(),
 			reqBody,
-
+		)
 		if err != nil {
 			return errMsg(err)
 		}
