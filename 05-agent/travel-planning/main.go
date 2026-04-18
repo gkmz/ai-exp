@@ -51,7 +51,7 @@ type ToolRuntime struct {
 const (
 	defaultDestination = "成都"
 	defaultBaseURL     = "http://127.0.0.1:11434/v1"
-	defaultModel       = "qwen2.5:7b-instruct"
+	defaultModel       = "qwen2.5:14b-instruct"
 )
 
 // 景点基础信息（成都热门景点）。不依赖外部 API，全部本地模拟。
@@ -133,27 +133,29 @@ var distanceKM = map[string]map[string]float64{
 		"熊猫基地":   15.7,
 	},
 	"熊猫基地": {
-		"武侯祠":   18.0,
-		"锦里古街":  17.8,
-		"宽窄巷子":  16.2,
-		"杜甫草堂":  17.1,
+		"武侯祠":    18.0,
+		"锦里古街":   17.8,
+		"宽窄巷子":   16.2,
+		"杜甫草堂":   17.1,
 		"三星堆博物馆": 27.0,
-		"成都博物馆": 15.5,
-		"四川科技馆": 15.7,
+		"成都博物馆":  15.5,
+		"四川科技馆":  15.7,
 	},
 }
 
 func main() {
 	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
 	destination := defaultDestination
+	fmt.Println("目的地: ", destination)
 
-	fmt.Printf("===== Travel Planning Agent Demo（%s）=====\n\n", destination)
+	fmt.Printf("===== Travel Planning Agent Demo =====\n\n")
 
 	// 关键流程：先构造本地模拟数据源，再把函数“注册为工具”给大模型调用。
 	runtime := newToolRuntime(destination, rng)
 	toolCalls := make([]ToolCallRecord, 0, 8)
 
 	client, model := newClient()
+	fmt.Println("模型: ", model)
 	finalPlan, err := runAgentWithToolCalling(client, model, runtime, &toolCalls)
 	if err != nil {
 		// 异常兜底：若本地模型不可用，仍输出可读结果，保证闭环可运行。
@@ -209,8 +211,8 @@ func runAgentWithToolCalling(client *openai.Client, model string, runtime *ToolR
 			Temperature: 0.2,
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
+		defer cancel()
 		resp, err := client.CreateChatCompletion(ctx, req)
-		cancel()
 		if err != nil {
 			return "", fmt.Errorf("调用本地大模型失败: %w", err)
 		}

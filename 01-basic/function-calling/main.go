@@ -89,6 +89,11 @@ func main() {
 			log.Fatalf("arguments parse error: %v", err)
 		}
 
+		// 关键步骤：服务端二次校验（示例里最少要校验非空）
+		if args.City == "" || args.Date == "" {
+			log.Fatal("工具参数缺失：city/date 不能为空")
+		}
+
 		// 调用工具函数获取天气信息
 		fmt.Printf("调用工具函数获取天气信息: %+v\n", args)
 		toolResult := getWeather(args.City, args.Date)
@@ -100,6 +105,7 @@ func main() {
 		})
 	}
 
+	// 第二次调用，带上工具调用的结果
 	finalResp, err := client.CreateChatCompletion(context.Background(), openai.ChatCompletionRequest{
 		Model:    "deepseek-chat",
 		Messages: msgs,
