@@ -10,6 +10,7 @@ func main() {
 	// d = &RequestDemo{}
 	// d = &InvokeParamsDemo{}
 	// d = &ChatHistoryDemo{}
-	d = &RequestBootstrapDemo{}
+	// d = &RequestBootstrapDemo{}
+	d= &MockCS{}
 	d.Run()
 }
