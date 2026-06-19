@@ -12,16 +12,17 @@ type TokenEstimater struct{}
 // DeepSeek 使用与 cl100k_base 接近的词表
 const encodingName = "cl100k_base"
 
-// DeepSeek API 定价（美元 / 1M tokens，缓存未命中，2026-04）
+// DeepSeek V4 API 定价（美元 / 1M tokens，2026-06）
 type ModelPricing struct {
-	InputPerM  float64
-	OutputPerM float64
+	InputPerM    float64 // 缓存未命中
+	CacheHitPerM float64 // 缓存命中（前缀匹配）
+	OutputPerM   float64
 }
 
-// 模型价格定义
+// 模型价格定义（V4 系列，上下文窗口 1M）
 var pricing = map[string]ModelPricing{
-	"deepseek-chat":     {InputPerM: 0.27, OutputPerM: 1.10},
-	"deepseek-reasoner": {InputPerM: 0.55, OutputPerM: 2.19},
+	"deepseek-v4-flash": {InputPerM: 0.14, CacheHitPerM: 0.0028, OutputPerM: 0.28},
+	"deepseek-v4-pro":   {InputPerM: 0.435, CacheHitPerM: 0.003625, OutputPerM: 0.87},
 }
 
 // CountTokens 返回文本的精准 token 数
@@ -65,20 +66,20 @@ func (te *TokenEstimater) run(text string) {
 
 func (te *TokenEstimater) runCostDemo() {
 	// 成本估算示例
-	fmt.Println("成本估算（deepseek-chat，缓存未命中）:")
+	fmt.Println("成本估算（deepseek-v4-flash，缓存未命中）:")
 	inputTokens := 500
 	outputTokens := 800
-	cost, _ := te.EstimateCost("deepseek-chat", inputTokens, outputTokens)
+	cost, _ := te.EstimateCost("deepseek-v4-flash", inputTokens, outputTokens)
 	fmt.Printf("输入 %d tokens + 输出 %d tokens\n", inputTokens, outputTokens)
 	fmt.Printf("单次成本：$%.6f（约 %.4f 元）\n", cost, cost*7.2)
 	fmt.Printf("日调用 10,000 次：约 %.1f 元\n", cost*7.2*10000)
 
 	// 窗口检查
-	fmt.Println("上下文窗口检查:")
-	const deepseekChatMaxInput = 64000
-	testInputs := []int{30000, 64001, 50000}
+	fmt.Println("上下文窗口检查（V4 支持 1M context）:")
+	const deepseekV4MaxInput = 1_000_000
+	testInputs := []int{30000, 500000, 1_000_001}
 	for _, n := range testInputs {
-		ok, over := te.CheckContextLimit(n, deepseekChatMaxInput)
+		ok, over := te.CheckContextLimit(n, deepseekV4MaxInput)
 		if ok {
 			fmt.Printf("输入 %d tokens：✅ 在窗口内，可用输出空间约 %d tokens\n",
 				n, te.calcMaxTokens(n))
@@ -90,8 +91,8 @@ func (te *TokenEstimater) runCostDemo() {
 
 func (te *TokenEstimater) calcMaxTokens(inputTokens int) int {
 	const (
-		maxInput  = 64000
-		maxOutput = 8000
+		maxInput  = 1_000_000 // V4 支持 1M context
+		maxOutput = 16_000    // V4 最大输出 16K（Flash）/ 64K（Pro）
 	)
 	remaining := int(float64(maxInput)*0.7) - inputTokens
 	if remaining <= 0 {
