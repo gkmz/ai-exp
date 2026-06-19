@@ -37,11 +37,11 @@ func main() {
 
 		// 初始化 DeepSeek 客户端
 		config := openai.DefaultConfig(apiKey)
-		config.BaseURL = "https://api.deepseek.com/v1"
+		config.BaseURL = "https://api.deepseek.com"
 		client := openai.NewClientWithConfig(config)
 
 		req := openai.ChatCompletionRequest{
-			Model: "deepseek-chat",
+			Model: "deepseek-v4-flash",
 			Messages: []openai.ChatCompletionMessage{
 				{Role: openai.ChatMessageRoleUser, Content: question},
 			},
