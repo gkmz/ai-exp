@@ -34,7 +34,7 @@ func (d *RequestDemo) Run() {
 	url := "https://api.deepseek.com/chat/completions"
 
 	body := map[string]any{
-		"model": "deepseek-chat",
+		"model": "deepseek-v4-flash",
 		"messages": []map[string]string{
 			{"role": "user", "content": "用一句话介绍Go语言"},
 		},

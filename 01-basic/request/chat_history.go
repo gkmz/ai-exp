@@ -82,7 +82,7 @@ func (d *ChatHistoryDemo) Run() {
 
 func fetchAIResponse(messages []Message) (Message, error) {
 	reqBody := chatRequest{
-		Model:    "deepseek-chat",
+		Model:    "deepseek-v4-flash",
 		Messages: messages,
 	}
 

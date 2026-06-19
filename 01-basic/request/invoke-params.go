@@ -58,7 +58,7 @@ type usage struct {
 	TotalTokens            int                `json:"total_tokens"`
 	PromptTokenDetails     promptTokenDetails `json:"prompt_token_details"`
 	PromptCacheHitTokens   int                `json:"prompt_cache_hit_tokens"`
-	PrommptCacheMissTokens int                `json:"prompt_cache_miss_tokens"`
+	PromptCacheMissTokens int                `json:"prompt_cache_miss_tokens"`
 }
 
 type promptTokenDetails struct {
@@ -69,9 +69,9 @@ func ptr[T ~float64 | ~int | ~string](r T) *T { return &r }
 
 // Run 运行调用参数演示
 func (d *InvokeParamsDemo) Run() {
-	// 1. 配置核心参数（适配deepseek-v3.2模型，2026最新设置）
+	// 1. 配置核心参数（适配 DeepSeek V4 模型）
 	requestBody := deepSeekRequest{
-		Model:            "deepseek-chat", // 选择2026年主推模型
+		Model:            "deepseek-v4-flash", // DeepSeek V4 主力模型
 		Temperature:      ptr(0.4),        // 技术文档生成，低随机性
 		MaxTokens:        ptr(1024),       // 输出长度限制，结合上下文窗口设置
 		TopP:             ptr(0.85),       // 聚焦核心内容

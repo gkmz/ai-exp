@@ -26,7 +26,8 @@ type DeepSeekResponse struct {
 	Usage struct {
 		PromptTokens         int `json:"prompt_tokens"`
 		CompletionTokens     int `json:"completion_tokens"`
-		PromptCacheHitTokens int `json:"prompt_cache_hit_tokens"`
+		PromptCacheHitTokens  int `json:"prompt_cache_hit_tokens"`
+		PromptCacheMissTokens int `json:"prompt_cache_miss_tokens"`
 	} `json:"usage"`
 }
 
@@ -42,7 +43,7 @@ func (d *RequestBootstrapDemo) Run() {
 	client := &http.Client{Timeout: 300 * time.Second}
 
 	reqBody := map[string]any{
-		"model":  "deepseek-reasoner",
+		"model":  "deepseek-v4-pro",
 		"messages": []map[string]string{
 			{"role": "system", "content": "你是资深 Go 架构师"},
 			{"role": "user", "content": "给我一个接口限流方案"},
