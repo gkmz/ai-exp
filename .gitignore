@@ -1,3 +1,4 @@
-mcp/.DS_Store
-03-llm-local/.DS_Store
 .DS_Store
+.env
+05-agent/agents/__pycache__
+.nvimlog
