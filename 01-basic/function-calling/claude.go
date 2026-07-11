@@ -13,15 +13,17 @@ import (
 
 const anthropicAPI = "https://api.anthropic.com/v1/messages"
 
+// const anthropicAPI = "YOUR_API_BASE_URL"
+
 // --- 请求体（只声明本示例用到的字段）---
 
 type messageCreateRequest struct {
-	Model       string          `json:"model"`
-	MaxTokens   int             `json:"max_tokens"`
-	Tools       []toolDef       `json:"tools,omitempty"`
-	ToolChoice  json.RawMessage `json:"tool_choice,omitempty"`
-	Messages    []message       `json:"messages"`
-	System      string          `json:"system,omitempty"`
+	Model      string          `json:"model"`
+	MaxTokens  int             `json:"max_tokens"`
+	Tools      []toolDef       `json:"tools,omitempty"`
+	ToolChoice json.RawMessage `json:"tool_choice,omitempty"`
+	Messages   []message       `json:"messages"`
+	System     string          `json:"system,omitempty"`
 }
 
 type toolDef struct {
@@ -70,6 +72,7 @@ func runClaudeToolDemo() {
 
 	client := &http.Client{}
 
+	// 定义工具
 	tools := []toolDef{
 		{
 			Name: "get_weather",
@@ -105,7 +108,7 @@ func runClaudeToolDemo() {
 	}
 
 	firstReq := messageCreateRequest{
-		Model:      "claude-sonnet-4-20250514",
+		Model:      "claude-sonnet-4-6",
 		MaxTokens:  1024,
 		Tools:      tools,
 		ToolChoice: toolChoiceAuto,
@@ -152,7 +155,7 @@ func runClaudeToolDemo() {
 
 	// 第二轮：assistant 原样带回 + user 仅含 tool_result（本示例无额外 user 文本）
 	secondReq := messageCreateRequest{
-		Model:     "claude-sonnet-4-20250514",
+		Model:     "claude-sonnet-4-6",
 		MaxTokens: 1024,
 		Tools:     tools,
 		Messages: []message{
@@ -181,6 +184,18 @@ func runClaudeToolDemo() {
 			fmt.Println(b.Text)
 		}
 	}
+
+	// output sample:
+	// 2026/07/11 22:10:35 第一轮 stop_reason=tool_use
+	// 2026/07/11 22:10:39 第二轮 stop_reason=end_turn
+	// --- Claude 最终回复 ---
+	// 明天上海天气不错，适合跑步：
+	//
+	// - 气温约 22°C，不冷不热，跑步体感舒适
+	// - 微风，不会感觉闷热
+	// - 降水概率低，不用担心淋雨
+	//
+	// 总体来说是跑步的好天气，建议早晨或傍晚出门，避开正午时段。
 }
 
 func callMessages(client *http.Client, apiKey string, body messageCreateRequest) (*messageResponse, error) {
@@ -242,3 +257,4 @@ func unitLabel(unit string) string {
 		return "°C"
 	}
 }
+

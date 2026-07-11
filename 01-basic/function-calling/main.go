@@ -2,7 +2,7 @@ package main
 
 func main() {
 	// runWeatherDemo()
-	// runClaudeToolDemo()
-	runMultiToolSeriallyDemo()
+	runClaudeToolDemo()
+	// runMultiToolSeriallyDemo()
 	// runMultiToolParallellyDemo()
 }
