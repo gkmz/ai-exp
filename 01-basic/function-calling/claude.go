@@ -69,6 +69,10 @@ func runClaudeToolDemo() {
 	if apiKey == "" {
 		log.Fatal("请设置环境变量 ANTHROPIC_API_KEY")
 	}
+	model := strings.TrimSpace(os.Getenv("ANTHROPIC_MODEL"))
+	if model == "" {
+		log.Fatal("请设置环境变量 ANTHROPIC_MODEL，值以 Anthropic 当前 Models 文档为准")
+	}
 
 	client := &http.Client{}
 
@@ -108,7 +112,7 @@ func runClaudeToolDemo() {
 	}
 
 	firstReq := messageCreateRequest{
-		Model:      "claude-sonnet-4-6",
+		Model:      model,
 		MaxTokens:  1024,
 		Tools:      tools,
 		ToolChoice: toolChoiceAuto,
@@ -155,7 +159,7 @@ func runClaudeToolDemo() {
 
 	// 第二轮：assistant 原样带回 + user 仅含 tool_result（本示例无额外 user 文本）
 	secondReq := messageCreateRequest{
-		Model:     "claude-sonnet-4-6",
+		Model:     model,
 		MaxTokens: 1024,
 		Tools:     tools,
 		Messages: []message{
@@ -257,4 +261,3 @@ func unitLabel(unit string) string {
 		return "°C"
 	}
 }
-

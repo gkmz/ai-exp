@@ -117,8 +117,11 @@ func runMultiToolParallellyDemo() {
 	if apiKey == "" {
 		log.Fatal("请先设置 DEEPSEEK_API_KEY")
 	}
+	model := strings.TrimSpace(os.Getenv("DEEPSEEK_MODEL"))
+	if model == "" {
+		log.Fatal("请先设置 DEEPSEEK_MODEL，值以 DeepSeek 当前模型文档为准")
+	}
 	baseURL := "https://api.deepseek.com/v1"
-	model := "deepseek-v4-flash"
 	traceID := strconv.FormatInt(time.Now().UnixNano(), 10)
 	mc := NewInMemoryMetrics()
 
@@ -128,7 +131,7 @@ func runMultiToolParallellyDemo() {
 			"type": "function",
 			"function": map[string]any{
 				"name":        "get_weather",
-				"description": "查询指定城市天气。",
+				"description": "查询一个城市的天气。每次只能传入一个城市；查询多个城市时必须为每个城市分别调用本工具。",
 				"parameters": map[string]any{
 					"type": "object",
 					"properties": map[string]any{
@@ -171,7 +174,7 @@ func runMultiToolParallellyDemo() {
 
 	// 关键步骤3：在同一任务中同时包含独立调用和依赖调用，让模型自行选择执行顺序。
 	messages := []ChatMessage{
-		{Role: "system", Content: "你是工具调用助手。没有依赖关系的工具必须在同一轮并行调用；有依赖关系的工具必须等待前置结果，再在后续轮次调用。"},
+		{Role: "system", Content: "你是工具调用助手。没有依赖关系的工具必须在同一轮并行调用；有依赖关系的工具必须等待前置结果，再在后续轮次调用。get_weather 每次只能查询一个城市，多个城市必须分别调用。"},
 		{Role: "user", Content: "请查询上海和纽约天气，同时告诉我纽约现在几点；然后根据上海的天气规划适合游览的景点。"},
 	}
 
@@ -200,6 +203,12 @@ func runMultiToolParallellyDemo() {
 			fmt.Println("----- 最终回答 -----")
 			fmt.Println(assistantMsg.Content)
 			return
+		}
+		// 第一轮应拆出两个天气查询和一个时间查询，否则本次并行实验不成立。
+		if turn == 1 {
+			if err := validateExpectedCalls(assistantMsg.ToolCalls); err != nil {
+				log.Fatalf("第一轮没有得到预期的三张工单: %v", err)
+			}
 		}
 
 		toolMessages, batchStats := runToolsInParallelWithMetrics(assistantMsg.ToolCalls, mc, traceID)
@@ -268,6 +277,42 @@ func runMultiToolParallellyDemo() {
 	// > ⚠️ 建议携带雨具，以防多云转雨
 	//
 	// 有任何其他需要帮忙的吗？😊
+}
+
+// validateExpectedCalls 校验第一轮是否按实验设计拆出三张相互独立的工单。
+func validateExpectedCalls(calls []ToolCallW) error {
+	if len(calls) != 3 {
+		return fmt.Errorf("期望 3 个 tool_calls，实际得到 %d 个", len(calls))
+	}
+
+	weatherCities := map[string]bool{}
+	hasNewYorkTime := false
+	for _, call := range calls {
+		switch call.Function.Name {
+		case "get_weather":
+			var input struct {
+				Location string `json:"location"`
+			}
+			if err := json.Unmarshal([]byte(call.Function.Arguments), &input); err != nil {
+				return fmt.Errorf("天气工具参数无法解析: %w", err)
+			}
+			weatherCities[strings.TrimSpace(input.Location)] = true
+		case "get_time":
+			var input struct {
+				Timezone string `json:"timezone"`
+			}
+			if err := json.Unmarshal([]byte(call.Function.Arguments), &input); err != nil {
+				return fmt.Errorf("时间工具参数无法解析: %w", err)
+			}
+			hasNewYorkTime = strings.TrimSpace(input.Timezone) == "America/New_York"
+		default:
+			return fmt.Errorf("第一轮出现未预期工具: %s", call.Function.Name)
+		}
+	}
+	if !weatherCities["上海"] || !weatherCities["纽约"] || !hasNewYorkTime {
+		return fmt.Errorf("工具参数不完整: weather=%v, new_york_time=%t", weatherCities, hasNewYorkTime)
+	}
+	return nil
 }
 
 func runToolsInParallelWithMetrics(calls []ToolCallW, mc MetricsCollector, traceID string) ([]ChatMessage, ToolBatchStats) {
@@ -376,7 +421,7 @@ func dispatchToolOnce(name, args string) (string, bool, bool) {
 			return "weather 参数错误：缺少 location", false, false
 		}
 		time.Sleep(300 * time.Millisecond)
-		return "上海：22°C，多云；纽约：16°C，晴", false, true
+		return in.Location + "：【模拟】22°C，多云", false, true
 	case "get_time":
 		var in struct {
 			Timezone string `json:"timezone"`
