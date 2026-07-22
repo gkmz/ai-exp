@@ -25,9 +25,13 @@ func getWeather(city, date string) string {
 
 func runWeatherDemo() {
 	apiKey := os.Getenv("DEEPSEEK_API_KEY")
+	model := os.Getenv("DEEPSEEK_MODEL")
 	baseURL := "https://api.deepseek.com/v1"
 	if apiKey == "" {
 		log.Fatal("请先设置 DEEPSEEK_API_KEY")
+	}
+	if model == "" {
+		log.Fatal("请先设置 DEEPSEEK_MODEL，值以 DeepSeek 当前模型文档为准")
 	}
 
 	cfg := openai.DefaultConfig(apiKey)
@@ -60,7 +64,7 @@ func runWeatherDemo() {
 
 	// 第一次调用，模型会根据工具函数生成 tool_calls 消息
 	firstResp, err := client.CreateChatCompletion(context.Background(), openai.ChatCompletionRequest{
-		Model:      "deepseek-chat",
+		Model:      model,
 		Messages:   msgs,
 		Tools:      tools, // 传入工具函数
 		ToolChoice: "auto",
@@ -76,6 +80,9 @@ func runWeatherDemo() {
 	fmt.Printf("firstResp: %+v\n", firstResp.Choices[0].Message)
 
 	assistantMsg := firstResp.Choices[0].Message
+	if len(assistantMsg.ToolCalls) == 0 {
+		log.Fatal("模型未触发工具调用，请检查模型、提示词和工具定义")
+	}
 	msgs = append(msgs, assistantMsg) // 关键：把模型的 tool_calls 消息放回上下文
 
 	// 处理工具函数调用
@@ -107,11 +114,14 @@ func runWeatherDemo() {
 
 	// 第二次调用，带上工具调用的结果
 	finalResp, err := client.CreateChatCompletion(context.Background(), openai.ChatCompletionRequest{
-		Model:    "deepseek-chat",
+		Model:    model,
 		Messages: msgs,
 	})
 	if err != nil {
 		log.Fatalf("final completion error: %v", err)
+	}
+	if len(finalResp.Choices) == 0 {
+		log.Fatal("模型第二轮没有返回 choices")
 	}
 
 	fmt.Println("最终回答：")
