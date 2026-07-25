@@ -1,0 +1,6 @@
+.env
+workspaces/
+__pycache__/
+*.pyc
+.streamlit.log
+
