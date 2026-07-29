@@ -1,5 +1,4 @@
 .DS_Store
 .env
-05-agent/agents/__pycache__
+__pycache__
 .nvimlog
-05-agent/framework/autogen/__pycache__
