@@ -22,9 +22,15 @@ uv sync --dev
 export LLM_API_KEY="your-api-key"
 export LLM_MODEL_ID="your-model-id"
 export LLM_BASE_URL="https://your-model-service.example.com/v1"
+export LLM_PROVIDER="openai"
 ```
 
 缺少任意变量时程序会打印明确错误并返回非零退出码。
+
+- `LLM_PROVIDER=openai`（默认）：用于 OpenAI Chat Completions 兼容接口，通常 `LLM_BASE_URL` 以 `/v1` 结尾。
+- `LLM_PROVIDER=dashscope`：仅用于 DashScope 原生 Generation API，此时 `LLM_BASE_URL` 必须是 DashScope 原生根地址，例如 `https://dashscope.aliyuncs.com`。
+
+不要把 OpenAI 兼容 `/v1` 地址交给 `dashscope` provider。DashScope SDK 会追加自己的原生 Generation 路径，从而导致 HTTP 404。
 
 ## 启动
 

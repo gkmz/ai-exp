@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 
 from agentscope.pipeline import MsgHub
 
+import util
 from game_messages import GameConsole, MessageType, MessageVisibility
 from output import (
     DiscussionModel,
@@ -13,7 +14,6 @@ from output import (
     get_werewolf_kill_model,
     get_witch_action_model,
 )
-import util
 
 if TYPE_CHECKING:
     from game import ThreeKingdomsWerewolfGame

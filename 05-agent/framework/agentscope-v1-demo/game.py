@@ -5,18 +5,17 @@ import random
 from typing import Any
 
 from agentscope.agent import AgentBase, ReActAgent
-from agentscope.formatter import DashScopeMultiAgentFormatter
 from agentscope.message import Msg
-from agentscope.model import DashScopeChatModel
 from pydantic import BaseModel
 
+import util
 from config import GameConfig
 from day_phases import DayPhaseManager
 from game_messages import GameConsole, MessageType, MessageVisibility
+from model_factory import create_model_components
 from night_phases import NightPhaseManager
 from prompt import ChinesePrompts
 from roles import GameModerator, GameRoles
-import util
 
 
 class ThreeKingdomsWerewolfGame:
@@ -177,16 +176,12 @@ class ThreeKingdomsWerewolfGame:
         """创建并初始化具有三国背景的玩家 Agent。"""
         name = util.get_chinese_name(character)
         self.roles[name] = role
+        model_components = create_model_components(self.config)
         agent = ReActAgent(
             name=name,
             sys_prompt=ChinesePrompts.get_role_prompt(role, character),
-            model=DashScopeChatModel(
-                model_name=self.config.model_id,
-                api_key=self.config.api_key,
-                base_http_api_url=self.config.base_url,
-                enable_thinking=True,
-            ),
-            formatter=DashScopeMultiAgentFormatter(),
+            model=model_components.model,
+            formatter=model_components.formatter,
         )
         agent.set_console_output_enabled(False)
         await self.notify_private(
@@ -200,6 +195,10 @@ class ThreeKingdomsWerewolfGame:
     async def setup_game(self) -> None:
         """根据配置创建玩家并分配角色。"""
         GameConsole.system(MessageType.STATE, "开始设置三国狼人杀游戏")
+        GameConsole.system(
+            MessageType.STATE,
+            f"模型接口协议：{self.config.provider}",
+        )
         roles = GameRoles.get_standard_setup(self.config.player_count)
         characters = random.sample(
             [

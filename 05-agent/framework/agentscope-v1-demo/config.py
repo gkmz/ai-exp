@@ -4,11 +4,14 @@ import argparse
 import os
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
+from typing import Literal, cast
 
 LLM_API_KEY = "LLM_API_KEY"
 LLM_MODEL_ID_KEY = "LLM_MODEL_ID"
 LLM_BASE_URL_KEY = "LLM_BASE_URL"
+LLM_PROVIDER_KEY = "LLM_PROVIDER"
 SUPPORTED_PLAYER_COUNTS = (6, 8, 9)
+SUPPORTED_PROVIDERS = ("openai", "dashscope")
 
 
 class ConfigError(ValueError):
@@ -22,6 +25,7 @@ class GameConfig:
     api_key: str = field(repr=False)
     model_id: str
     base_url: str
+    provider: Literal["openai", "dashscope"] = "openai"
     player_count: int = 8
     max_rounds: int = 10
     discussion_rounds: int = 3
@@ -84,10 +88,16 @@ def load_config(
     if missing_keys:
         raise ConfigError(f"缺少必要环境变量：{', '.join(missing_keys)}")
 
+    provider_value = environment.get(LLM_PROVIDER_KEY, "openai").strip().lower()
+    if provider_value not in SUPPORTED_PROVIDERS:
+        raise ConfigError(f"LLM_PROVIDER 仅支持：{', '.join(SUPPORTED_PROVIDERS)}")
+    provider = cast(Literal["openai", "dashscope"], provider_value)
+
     return GameConfig(
         api_key=environment[LLM_API_KEY],
         model_id=environment[LLM_MODEL_ID_KEY],
         base_url=environment[LLM_BASE_URL_KEY],
+        provider=provider,
         player_count=args.players,
         max_rounds=args.max_rounds,
         discussion_rounds=args.discussion_rounds,

@@ -49,3 +49,20 @@ def test_load_config_builds_valid_configuration() -> None:
     assert config.player_count == 9
     assert config.max_rounds == 12
     assert config.model_id == "test-model"
+    assert config.provider == "openai"
+
+
+def test_load_config_rejects_unknown_provider() -> None:
+    """不支持的模型协议必须在启动前失败。"""
+    args = build_argument_parser().parse_args([])
+
+    with pytest.raises(ConfigError, match="LLM_PROVIDER"):
+        load_config(
+            args,
+            environ={
+                "LLM_API_KEY": "test-key",
+                "LLM_MODEL_ID": "test-model",
+                "LLM_BASE_URL": "https://example.com/api",
+                "LLM_PROVIDER": "unknown",
+            },
+        )
