@@ -8,9 +8,9 @@ from agentscope.pipeline import MsgHub
 import util
 from game_messages import GameConsole, MessageType, MessageVisibility
 from output import (
-    DiscussionModel,
     get_guardian_model,
     get_seer_model,
+    get_werewolf_discussion_model,
     get_werewolf_kill_model,
     get_witch_action_model,
 )
@@ -41,10 +41,22 @@ class NightPhaseManager:
         if not self.game.werewolves:
             return None
 
+        werewolf_names = {wolf.name for wolf in self.game.werewolves}
+        valid_target_names = sorted(
+            player.name
+            for player in self.game.alive_players
+            if player.name not in werewolf_names
+        )
+        discussion_model = get_werewolf_discussion_model(
+            self.game.alive_players,
+            werewolf_names,
+        )
         await self.game.notify_private_group(
             self.game.werewolves,
             f"第{round_num}夜狼人请睁眼并讨论击杀目标。"
-            f"存活玩家：{util.format_player_list(self.game.alive_players)}",
+            f"狼人队友：{util.format_player_list_str(sorted(werewolf_names))}。"
+            f"可击杀目标：{util.format_player_list_str(valid_target_names)}。"
+            "本局禁止自刀或击杀狼人队友，不得提议将狼人队友作为击杀目标。",
             "狼人阵营",
         )
 
@@ -53,7 +65,7 @@ class NightPhaseManager:
                 for wolf in self.game.werewolves:
                     discussion_msg = await self.game.call_agent(
                         wolf,
-                        structured_model=DiscussionModel,
+                        structured_model=discussion_model,
                     )
                     self.game.display_agent_reply(
                         wolf,
@@ -69,7 +81,6 @@ class NightPhaseManager:
                 visibility=MessageVisibility.PRIVATE,
                 recipient="狼人阵营",
             )
-            werewolf_names = {wolf.name for wolf in self.game.werewolves}
             kill_model = get_werewolf_kill_model(
                 self.game.alive_players,
                 werewolf_names,

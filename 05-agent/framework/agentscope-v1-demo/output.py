@@ -20,6 +20,40 @@ class DiscussionModel(BaseModel):
     key_evidence: str | None = Field(description="支持观点的关键证据", default=None)
 
 
+def _werewolf_target_names(
+    agents: Sequence[ReActAgent],
+    werewolf_names: set[str],
+) -> set[str]:
+    """返回当前存活且不属于狼人阵营的玩家姓名。"""
+    return _player_names(agents) - werewolf_names
+
+
+def get_werewolf_discussion_model(
+    agents: Sequence[ReActAgent],
+    werewolf_names: set[str],
+) -> type[BaseModel]:
+    """生成只允许狼人提议击杀存活非狼人玩家的讨论模型。"""
+    target_names = _werewolf_target_names(agents, werewolf_names)
+    target_names_text = ",".join(sorted(target_names)) or "无可用目标"
+
+    class WerewolfDiscussionModel(DiscussionModel):
+        """狼人阵营夜间讨论输出。"""
+
+        proposed_target: str = Field(
+            description=f"建议的击杀目标，只能从 {target_names_text} 中选择"
+        )
+
+        @field_validator("proposed_target")
+        @classmethod
+        def validate_proposed_target(cls, value: str) -> str:
+            """校验讨论目标必须是存活的非狼人玩家。"""
+            if value not in target_names:
+                raise ValueError(f"不可提议击杀玩家：{value}")
+            return value
+
+    return WerewolfDiscussionModel
+
+
 def get_vote_model_cn(
     agents: Sequence[ReActAgent],
     voter_name: str,
@@ -211,7 +245,7 @@ def get_werewolf_kill_model(
     werewolf_names: set[str],
 ) -> type[BaseModel]:
     """生成只允许选择存活非狼人玩家的击杀模型。"""
-    target_names = _player_names(agents) - werewolf_names
+    target_names = _werewolf_target_names(agents, werewolf_names)
     target_names_text = ",".join(sorted(target_names)) or "无可用目标"
 
     class WerewolfKillModel(BaseModel):

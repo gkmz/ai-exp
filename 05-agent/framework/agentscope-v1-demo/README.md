@@ -30,6 +30,7 @@ export SPECTATOR_MODE="true"
 缺少任意变量时程序会打印明确错误并返回非零退出码。
 
 - `LLM_PROVIDER=openai`（默认）：用于 OpenAI Chat Completions 兼容接口，通常 `LLM_BASE_URL` 以 `/v1` 结尾。
+- `LLM_PROVIDER=deepseek`：用于 DeepSeek OpenAI 兼容接口；程序会关闭 thinking 模式，以支持游戏行动所需的结构化输出。
 - `LLM_PROVIDER=dashscope`：仅用于 DashScope 原生 Generation API，此时 `LLM_BASE_URL` 必须是 DashScope 原生根地址，例如 `https://dashscope.aliyuncs.com`。
 
 不要把 OpenAI 兼容 `/v1` 地址交给 `dashscope` provider。DashScope SDK 会追加自己的原生 Generation 路径，从而导致 HTTP 404。
@@ -66,6 +67,7 @@ uv run python main.py \
 
 ## 角色规则
 
+- 采用屠边胜负规则：狼人淘汰所有村民或所有神职后获胜；好人淘汰所有狼人后获胜，双方人数持平不会直接结束游戏。
 - 狼人只能击杀当前存活的非狼人玩家。
 - 预言家不能查验自己。
 - 女巫一晚最多使用一瓶药，不能毒自己。

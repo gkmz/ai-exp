@@ -60,6 +60,9 @@ class ThreeKingdomsWerewolfGame:
         if callable(get_text_content):
             text_content = get_text_content()
             if isinstance(text_content, str) and text_content:
+                # 部分兼容接口偶尔把内部 DSML 工具协议放进普通文本块。
+                if "<｜｜DSML｜｜" in text_content:
+                    return "无有效回复"
                 return text_content
         return "无文本回复"
 

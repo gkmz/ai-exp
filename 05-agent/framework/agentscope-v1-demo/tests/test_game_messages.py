@@ -1,6 +1,6 @@
 """游戏控制台布局测试。"""
 
-from game_messages import GameConsole
+from game_messages import GameConsole, MessageType
 
 
 def test_banner_and_section_add_visual_boundaries(capsys) -> None:
@@ -63,3 +63,16 @@ def test_round_summary_handles_no_deaths(capsys) -> None:
     assert "死亡玩家：无人死亡" in output
     assert "存活玩家：刘备、曹操" in output
     assert "当前人数：2" in output
+
+
+def test_player_messages_are_separated_by_blank_lines(capsys) -> None:
+    """连续玩家发言之间必须保留一个完整空行。"""
+    GameConsole.player("刘备", MessageType.PUBLIC_SPEECH, "先听诸位分析。")
+    GameConsole.player("司马懿", MessageType.PUBLIC_SPEECH, "此事仍有疑点。")
+
+    output = capsys.readouterr().out
+
+    assert (
+        "[玩家][公开发言][刘备] 先听诸位分析。\n\n"
+        "[玩家][公开发言][司马懿] 此事仍有疑点。\n\n"
+    ) == output

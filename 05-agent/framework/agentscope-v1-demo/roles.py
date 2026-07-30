@@ -14,7 +14,7 @@ class GameRoles:
         "狼人": {
             "description": "狼人",
             "ability": "夜晚可以击杀一名玩家",
-            "win_condition": "消灭所有好人或与好人数量相等",
+            "win_condition": "淘汰所有村民或所有神职",
             "team": "狼人阵营",
         },
         "预言家": {

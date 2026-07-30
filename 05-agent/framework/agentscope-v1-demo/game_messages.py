@@ -159,4 +159,8 @@ class GameConsole:
         recipient: str | None = None,
     ) -> None:
         """打印玩家消息。"""
-        print(cls.format_player(player_name, message_type, content, recipient))
+        # 玩家消息使用独立段落，避免连续发言在控制台中挤成一块。
+        print(
+            cls.format_player(player_name, message_type, content, recipient),
+            end="\n\n",
+        )

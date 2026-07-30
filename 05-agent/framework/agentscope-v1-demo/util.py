@@ -70,7 +70,7 @@ def majority_vote_cn(
 def check_winning_cn(
     alive_players: Sequence[ReActAgent], roles: Mapping[str, str]
 ) -> Optional[str]:
-    """检查游戏胜利条件"""
+    """按照屠边规则检查游戏胜利条件。"""
     missing_players = [
         player.name for player in alive_players if player.name not in roles
     ]
@@ -79,12 +79,15 @@ def check_winning_cn(
 
     alive_roles = [roles[player.name] for player in alive_players]
     werewolf_count = alive_roles.count("狼人")
-    villager_count = len(alive_roles) - werewolf_count
+    villager_count = alive_roles.count("村民")
+    god_count = sum(role not in {"狼人", "村民"} for role in alive_roles)
 
     if werewolf_count == 0:
         return "好人阵营胜利！所有狼人已被淘汰！"
-    elif werewolf_count >= villager_count:
-        return "狼人阵营胜利！狼人数量已达到或超过好人！"
+    if villager_count == 0:
+        return "狼人阵营胜利！所有村民已被淘汰！"
+    if god_count == 0:
+        return "狼人阵营胜利！所有神职已被淘汰！"
 
     return None
 

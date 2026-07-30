@@ -4,10 +4,30 @@ import contextlib
 import io
 
 import pytest
+from agentscope.message import Msg
 
 from config import GameConfig
 from game import ThreeKingdomsWerewolfGame
 from tests.helpers import FakeAgent
+
+
+def test_message_text_rejects_dsml_tool_protocol() -> None:
+    """模型误放进文本块的 DSML 工具协议不得作为玩家发言展示。"""
+    game = ThreeKingdomsWerewolfGame(
+        GameConfig("key", "model", "https://example.com")
+    )
+    message = Msg(
+        "刘备",
+        """<｜｜DSML｜｜tool_calls>
+<｜｜DSML｜｜invoke name="generate_response">
+<｜｜DSML｜｜parameter name="vote" string="true">赵云</｜｜DSML｜｜parameter>
+<｜｜DSML｜｜parameter name="reason" string="true">投票理由</｜｜DSML｜｜parameter>
+</｜｜DSML｜｜invoke>
+</｜｜DSML｜｜tool_calls>""",
+        "assistant",
+    )
+
+    assert game.message_text(message) == "无有效回复"
 
 
 @pytest.mark.asyncio
@@ -131,10 +151,17 @@ async def test_game_announces_draw_after_max_rounds() -> None:
     wolf = FakeAgent("曹操")
     villager = FakeAgent("刘备")
     second_villager = FakeAgent("关羽")
-    game.alive_players = [wolf, villager, second_villager]
+    seer = FakeAgent("诸葛亮")
+    game.alive_players = [wolf, villager, second_villager, seer]
     game.werewolves = [wolf]
     game.villagers = [villager, second_villager]
-    game.roles = {"曹操": "狼人", "刘备": "村民", "关羽": "村民"}
+    game.seer = [seer]
+    game.roles = {
+        "曹操": "狼人",
+        "刘备": "村民",
+        "关羽": "村民",
+        "诸葛亮": "预言家",
+    }
 
     async def no_setup() -> None:
         return None

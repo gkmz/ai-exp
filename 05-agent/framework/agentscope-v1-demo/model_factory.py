@@ -7,6 +7,7 @@ from agentscope.formatter import (
     OpenAIMultiAgentFormatter,
 )
 from agentscope.model import DashScopeChatModel, OpenAIChatModel
+from agentscope.types import JSONSerializableObject
 
 from config import GameConfig
 
@@ -32,11 +33,19 @@ def create_model_components(config: GameConfig) -> ModelComponents:
             formatter=DashScopeMultiAgentFormatter(),
         )
 
+    generate_kwargs: dict[str, JSONSerializableObject] = {}
+    if config.provider == "deepseek":
+        # DeepSeek 思考模式不支持 ReActAgent 结构化输出使用的强制工具调用。
+        generate_kwargs = {
+            "extra_body": {"thinking": {"type": "disabled"}},
+        }
+
     return ModelComponents(
         model=OpenAIChatModel(
             model_name=config.model_id,
             api_key=config.api_key,
             client_kwargs={"base_url": config.base_url},
+            generate_kwargs=generate_kwargs,
         ),
         formatter=OpenAIMultiAgentFormatter(),
     )

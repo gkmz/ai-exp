@@ -12,7 +12,7 @@ LLM_BASE_URL_KEY = "LLM_BASE_URL"
 LLM_PROVIDER_KEY = "LLM_PROVIDER"
 SPECTATOR_MODE_KEY = "SPECTATOR_MODE"
 SUPPORTED_PLAYER_COUNTS = (6, 8, 9)
-SUPPORTED_PROVIDERS = ("openai", "dashscope")
+SUPPORTED_PROVIDERS = ("openai", "dashscope", "deepseek")
 TRUE_VALUES = frozenset({"1", "true", "yes", "on"})
 FALSE_VALUES = frozenset({"0", "false", "no", "off"})
 
@@ -28,7 +28,7 @@ class GameConfig:
     api_key: str = field(repr=False)
     model_id: str
     base_url: str
-    provider: Literal["openai", "dashscope"] = "openai"
+    provider: Literal["openai", "dashscope", "deepseek"] = "openai"
     player_count: int = 8
     max_rounds: int = 10
     discussion_rounds: int = 3
@@ -105,7 +105,10 @@ def load_config(
     provider_value = environment.get(LLM_PROVIDER_KEY, "openai").strip().lower()
     if provider_value not in SUPPORTED_PROVIDERS:
         raise ConfigError(f"LLM_PROVIDER 仅支持：{', '.join(SUPPORTED_PROVIDERS)}")
-    provider = cast(Literal["openai", "dashscope"], provider_value)
+    provider = cast(
+        Literal["openai", "dashscope", "deepseek"],
+        provider_value,
+    )
 
     return GameConfig(
         api_key=environment[LLM_API_KEY],

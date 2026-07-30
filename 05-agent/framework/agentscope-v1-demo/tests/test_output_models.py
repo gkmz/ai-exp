@@ -5,6 +5,7 @@ from types import SimpleNamespace
 import pytest
 from pydantic import ValidationError
 
+import output as output_module
 from output import (
     get_guardian_model,
     get_seer_model,
@@ -45,6 +46,36 @@ def test_werewolf_model_only_accepts_non_werewolf_alive_target() -> None:
         model(target="司马懿", kill_strategy="测试")
     with pytest.raises(ValidationError):
         model(target="不存在的玩家", kill_strategy="测试")
+
+
+def test_werewolf_discussion_rejects_teammate_target() -> None:
+    """狼人讨论不能提议击杀自己或其他狼人。"""
+    factory = getattr(output_module, "get_werewolf_discussion_model", None)
+    assert factory is not None
+    players = make_players("赵云", "曹操", "刘备", "关羽")
+    model = factory(players, {"赵云", "曹操"})
+
+    model(
+        proposed_target="刘备",
+        reach_agreement=False,
+        confidence_level=6,
+        key_evidence="刘备的发言有矛盾",
+    )
+    with pytest.raises(ValidationError):
+        model(
+            proposed_target="赵云",
+            reach_agreement=False,
+            confidence_level=6,
+            key_evidence="测试",
+        )
+
+
+def test_werewolf_prompt_forbids_targeting_teammates() -> None:
+    """狼人角色提示必须说明目标规则并禁止击杀狼队友。"""
+    prompt = ChinesePrompts.get_role_prompt("狼人", "赵云")
+
+    assert "淘汰所有村民或所有神职" in prompt
+    assert "禁止自刀或击杀狼人队友" in prompt
 
 
 def test_guardian_can_guard_self_but_not_same_player_twice() -> None:

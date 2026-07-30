@@ -32,7 +32,13 @@ async def run(
 
 def main() -> None:
     """运行异步入口并将结果作为进程退出码。"""
-    raise SystemExit(asyncio.run(run()))
+    try:
+        exit_code = asyncio.run(run())
+    except KeyboardInterrupt:
+        # asyncio.run 已完成异步任务取消和事件循环清理，此处只负责友好退出。
+        GameConsole.system(MessageType.STATE, "游戏已退出")
+        exit_code = 130
+    raise SystemExit(exit_code)
 
 
 if __name__ == "__main__":
