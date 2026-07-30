@@ -3,6 +3,7 @@ from typing import List
 from agentscope.agent import AgentBase
 from agentscope.message import Msg
 
+from game_messages import GameConsole, MessageType, MessageVisibility
 import util
 
 
@@ -24,13 +25,13 @@ class GameRoles:
         },
         "女巫": {
             "description": "女巫",
-            "ability": "拥有解药和毒药各一瓶，可以救人或杀人",
+            "ability": "拥有解药和毒药各一瓶，每晚最多使用一瓶药且不能毒自己",
             "win_condition": "消灭所有狼人",
             "team": "好人阵营",
         },
         "猎人": {
             "description": "猎人",
-            "ability": "被投票出局时可以开枪带走一名玩家",
+            "ability": "被狼人击杀或被放逐时可以发表遗言并开枪带走一名玩家",
             "win_condition": "消灭所有狼人",
             "team": "好人阵营",
         },
@@ -128,31 +129,46 @@ class GameRoles:
 
 
 class GameModerator(AgentBase):
-    """中文版游戏主持人"""
+    """游戏主持人。"""
 
     def __init__(self) -> None:
         super().__init__()
         self.name = "游戏主持人"
         self.game_log: List[str] = []
 
-    async def announce(self, content: str) -> Msg:
-        """发布游戏公告"""
-        # 主持人消息
-        msg = Msg(name=self.name, content=f"📢 {content}", role="system")
-        self.game_log.append(content)
-        # AgentBase提供的异步方法，吧消息放入展示队列，在终端显示消息内容
-        await self.print(msg)
+    async def announce(
+        self,
+        content: str,
+        message_type: MessageType = MessageType.PUBLIC_ANNOUNCEMENT,
+        visibility: MessageVisibility = MessageVisibility.PUBLIC,
+        recipient: str | None = None,
+    ) -> Msg:
+        """创建并打印带有类型和可见范围的主持人消息。"""
+        msg = Msg(
+            name=self.name,
+            content=content,
+            role="system",
+            metadata={
+                "message_type": message_type.value,
+                "visibility": visibility.value,
+                "recipient": recipient,
+            },
+        )
+        self.game_log.append(
+            GameConsole.format_moderator(message_type, content, recipient)
+        )
+        GameConsole.moderator(message_type, content, recipient)
         return msg
 
     async def night_announcement(self, round_num: int) -> Msg:
         """夜晚阶段公告"""
-        content = f"🌙 第{round_num}夜降临，天黑请闭眼..."
-        return await self.announce(content)
+        content = f"第{round_num}夜降临，天黑请闭眼"
+        return await self.announce(content, MessageType.PHASE)
 
     async def day_announcement(self, round_num: int) -> Msg:
         """白天阶段公告"""
-        content = f"☀️ 第{round_num}天天亮了，请大家睁眼..."
-        return await self.announce(content)
+        content = f"第{round_num}天天亮了，请大家睁眼"
+        return await self.announce(content, MessageType.PHASE)
 
     async def death_announcement(self, dead_players: List[str]) -> Msg:
         """死亡公告"""
@@ -160,14 +176,14 @@ class GameModerator(AgentBase):
             content = "昨夜平安无事，无人死亡。"
         else:
             content = f"昨夜，{util.format_player_list_str(dead_players)}不幸遇害。"
-        return await self.announce(content)
+        return await self.announce(content, MessageType.RESULT)
 
     async def vote_result_announcement(self, voted_out: str, vote_count: int) -> Msg:
         """投票结果公告"""
         content = f"投票结果：{voted_out}以{vote_count}票被淘汰出局。"
-        return await self.announce(content)
+        return await self.announce(content, MessageType.RESULT)
 
     async def game_over_announcement(self, winner: str) -> Msg:
         """游戏结束公告"""
-        content = f"🎉 游戏结束！{winner}"
-        return await self.announce(content)
+        content = f"游戏结束：{winner}"
+        return await self.announce(content, MessageType.RESULT)
