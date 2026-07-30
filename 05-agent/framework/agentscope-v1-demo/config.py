@@ -10,8 +10,11 @@ LLM_API_KEY = "LLM_API_KEY"
 LLM_MODEL_ID_KEY = "LLM_MODEL_ID"
 LLM_BASE_URL_KEY = "LLM_BASE_URL"
 LLM_PROVIDER_KEY = "LLM_PROVIDER"
+SPECTATOR_MODE_KEY = "SPECTATOR_MODE"
 SUPPORTED_PLAYER_COUNTS = (6, 8, 9)
 SUPPORTED_PROVIDERS = ("openai", "dashscope")
+TRUE_VALUES = frozenset({"1", "true", "yes", "on"})
+FALSE_VALUES = frozenset({"0", "false", "no", "off"})
 
 
 class ConfigError(ValueError):
@@ -30,6 +33,7 @@ class GameConfig:
     max_rounds: int = 10
     discussion_rounds: int = 3
     agent_attempts: int = 2
+    spectator_mode: bool = False
 
 
 def _positive_int(value: str) -> int:
@@ -38,6 +42,16 @@ def _positive_int(value: str) -> int:
     if parsed_value < 1:
         raise argparse.ArgumentTypeError("必须是大于 0 的整数")
     return parsed_value
+
+
+def _parse_bool(value: str) -> bool:
+    """解析环境变量布尔值，非法值直接阻止游戏启动。"""
+    normalized_value = value.strip().lower()
+    if normalized_value in TRUE_VALUES:
+        return True
+    if normalized_value in FALSE_VALUES:
+        return False
+    raise ConfigError(f"{SPECTATOR_MODE_KEY} 仅支持：true/false、1/0、yes/no、on/off")
 
 
 def build_argument_parser() -> argparse.ArgumentParser:
@@ -102,4 +116,7 @@ def load_config(
         max_rounds=args.max_rounds,
         discussion_rounds=args.discussion_rounds,
         agent_attempts=args.agent_attempts,
+        spectator_mode=_parse_bool(
+            environment.get(SPECTATOR_MODE_KEY, "false"),
+        ),
     )

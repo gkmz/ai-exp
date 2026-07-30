@@ -135,6 +135,11 @@ class GameModerator(AgentBase):
         super().__init__()
         self.name = "游戏主持人"
         self.game_log: list[str] = []
+        self._private_content_visible = False
+
+    def set_private_content_visible(self, visible: bool) -> None:
+        """设置主持人私密消息是否在控制台显示原文。"""
+        self._private_content_visible = visible
 
     async def announce(
         self,
@@ -154,10 +159,16 @@ class GameModerator(AgentBase):
                 "recipient": recipient,
             },
         )
-        self.game_log.append(
-            GameConsole.format_moderator(message_type, content, recipient)
+        # 私密消息只隐藏控制台副本，投递给 Agent 的 Msg 始终保留原文。
+        display_content = (
+            GameConsole.visible_content(content, self._private_content_visible)
+            if visibility is MessageVisibility.PRIVATE
+            else content
         )
-        GameConsole.moderator(message_type, content, recipient)
+        self.game_log.append(
+            GameConsole.format_moderator(message_type, display_content, recipient)
+        )
+        GameConsole.moderator(message_type, display_content, recipient)
         return msg
 
     async def night_announcement(self, round_num: int) -> Msg:

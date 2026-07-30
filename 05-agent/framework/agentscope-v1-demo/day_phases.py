@@ -24,6 +24,7 @@ class DayPhaseManager:
         await self.game.broadcast_message(
             await self.game.moderator.day_announcement(round_num)
         )
+        GameConsole.section("公开讨论")
         await self.game.announce_public(
             f"现在开始自由讨论。存活玩家：{util.format_player_list(self.game.alive_players)}"
         )
@@ -39,6 +40,7 @@ class DayPhaseManager:
                 )
 
             hub.set_auto_broadcast(False)
+            GameConsole.section("放逐投票")
             vote_request = await self.game.moderator.announce(
                 "请投票选择要淘汰的玩家",
                 message_type=MessageType.PUBLIC_ANNOUNCEMENT,
@@ -65,8 +67,8 @@ class DayPhaseManager:
                     continue
 
                 votes[player.name] = vote_target
-                GameConsole.player(
-                    player.name,
+                self.game.display_player_message(
+                    player,
                     MessageType.PRIVATE_ACTION,
                     f"放逐投票：{vote_target}；理由：{metadata.get('reason', '未说明')}",
                     "系统",
@@ -101,6 +103,7 @@ class DayPhaseManager:
             )
             return None
 
+        GameConsole.section("猎人技能", "身份公开、遗言与开枪")
         await self.game.announce_public(
             f"{hunter_agent.name}身份公开：猎人，死亡原因：{death_cause}",
             MessageType.SKILL,

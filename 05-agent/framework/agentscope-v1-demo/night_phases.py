@@ -92,8 +92,8 @@ class NightPhaseManager:
                     continue
 
                 votes[wolf.name] = target
-                GameConsole.player(
-                    wolf.name,
+                self.game.display_player_message(
+                    wolf,
                     MessageType.PRIVATE_ACTION,
                     f"击杀投票：{target}",
                     "系统",
@@ -150,8 +150,8 @@ class NightPhaseManager:
             return None
 
         self.game.last_guarded_player = target
-        GameConsole.player(
-            guardian_agent.name,
+        self.game.display_player_message(
+            guardian_agent,
             MessageType.PRIVATE_ACTION,
             f"守护目标：{target}；理由：{metadata.get('guard_reason', '未说明')}",
             "系统",
@@ -193,8 +193,8 @@ class NightPhaseManager:
             )
             return
 
-        GameConsole.player(
-            seer_agent.name,
+        self.game.display_player_message(
+            seer_agent,
             MessageType.PRIVATE_ACTION,
             f"查验目标：{target_name}；理由：{metadata.get('check_reason', '未说明')}",
             "系统",
@@ -247,8 +247,8 @@ class NightPhaseManager:
             else:
                 saved_player = killed_player
                 self.game.witch_has_antidote = False
-                GameConsole.player(
-                    witch_agent.name,
+                self.game.display_player_message(
+                    witch_agent,
                     MessageType.PRIVATE_ACTION,
                     f"使用解药救助{killed_player}；理由：{action_reason}",
                     "系统",
@@ -269,15 +269,15 @@ class NightPhaseManager:
             else:
                 poisoned_player = poison_target
                 self.game.witch_has_poison = False
-                GameConsole.player(
-                    witch_agent.name,
+                self.game.display_player_message(
+                    witch_agent,
                     MessageType.PRIVATE_ACTION,
                     f"使用毒药毒杀{poison_target}；理由：{action_reason}",
                     "系统",
                 )
         else:
-            GameConsole.player(
-                witch_agent.name,
+            self.game.display_player_message(
+                witch_agent,
                 MessageType.PRIVATE_ACTION,
                 f"本夜不使用药品；理由：{action_reason}",
                 "系统",

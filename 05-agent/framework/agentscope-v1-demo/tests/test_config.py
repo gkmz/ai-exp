@@ -50,6 +50,56 @@ def test_load_config_builds_valid_configuration() -> None:
     assert config.max_rounds == 12
     assert config.model_id == "test-model"
     assert config.provider == "openai"
+    assert config.spectator_mode is False
+
+
+@pytest.mark.parametrize(
+    ("raw_value", "expected"),
+    [
+        ("true", True),
+        ("1", True),
+        ("yes", True),
+        ("on", True),
+        ("false", False),
+        ("0", False),
+        ("no", False),
+        ("off", False),
+    ],
+)
+def test_load_config_parses_spectator_mode(
+    raw_value: str,
+    expected: bool,
+) -> None:
+    """观战模式接受常见的布尔环境变量写法。"""
+    args = build_argument_parser().parse_args([])
+
+    config = load_config(
+        args,
+        environ={
+            "LLM_API_KEY": "test-key",
+            "LLM_MODEL_ID": "test-model",
+            "LLM_BASE_URL": "https://example.com/api",
+            "SPECTATOR_MODE": raw_value,
+        },
+    )
+
+    assert config.spectator_mode is expected
+
+
+def test_load_config_rejects_invalid_spectator_mode() -> None:
+    """非法布尔值必须在游戏启动前报告。"""
+    args = build_argument_parser().parse_args([])
+
+    with pytest.raises(ConfigError, match="SPECTATOR_MODE"):
+        load_config(
+            args,
+            environ={
+                "LLM_API_KEY": "test-key",
+                "LLM_MODEL_ID": "test-model",
+                "LLM_BASE_URL": "https://example.com/api",
+                "SPECTATOR_MODE": "sometimes",
+            },
+        )
 
 
 def test_load_config_rejects_unknown_provider() -> None:

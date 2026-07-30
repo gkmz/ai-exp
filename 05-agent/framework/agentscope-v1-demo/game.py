@@ -31,6 +31,7 @@ class ThreeKingdomsWerewolfGame:
         self.players: dict[str, ReActAgent] = {}
         self.roles: dict[str, str] = {}
         self.moderator = moderator or GameModerator()
+        self.moderator.set_private_content_visible(config.spectator_mode)
         self.alive_players: list[ReActAgent] = []
         self.werewolves: list[ReActAgent] = []
         self.villagers: list[ReActAgent] = []
@@ -125,10 +126,34 @@ class ThreeKingdomsWerewolfGame:
         recipient: str | None = None,
     ) -> None:
         """按照游戏消息类型展示 Agent 的最终回复。"""
+        self.display_player_message(
+            agent,
+            message_type,
+            self.message_text(msg),
+            recipient,
+        )
+
+    def display_player_message(
+        self,
+        agent: ReActAgent,
+        message_type: MessageType,
+        content: str,
+        recipient: str | None = None,
+    ) -> None:
+        """按照消息可见范围打印玩家发言或行动。"""
+        private_types = {
+            MessageType.PRIVATE_SPEECH,
+            MessageType.PRIVATE_ACTION,
+        }
+        display_content = (
+            GameConsole.visible_content(content, self.config.spectator_mode)
+            if message_type in private_types
+            else content
+        )
         GameConsole.player(
             agent.name,
             message_type,
-            self.message_text(msg),
+            display_content,
             recipient,
         )
 
@@ -194,10 +219,15 @@ class ThreeKingdomsWerewolfGame:
 
     async def setup_game(self) -> None:
         """根据配置创建玩家并分配角色。"""
+        GameConsole.banner("三国狼人杀 · 游戏开始")
         GameConsole.system(MessageType.STATE, "开始设置三国狼人杀游戏")
         GameConsole.system(
             MessageType.STATE,
             f"模型接口协议：{self.config.provider}",
+        )
+        GameConsole.system(
+            MessageType.STATE,
+            f"观战模式：{'开启' if self.config.spectator_mode else '关闭'}",
         )
         roles = GameRoles.get_standard_setup(self.config.player_count)
         characters = random.sample(
@@ -231,6 +261,11 @@ class ThreeKingdomsWerewolfGame:
             else:
                 self.villagers.append(agent)
 
+        GameConsole.role_table(
+            [player.name for player in self.alive_players],
+            self.roles,
+            reveal_roles=self.config.spectator_mode,
+        )
         await self.announce_public(
             f"三国狼人杀游戏开始！参与者：{util.format_player_list(self.alive_players)}"
         )
@@ -269,13 +304,25 @@ class ThreeKingdomsWerewolfGame:
             await self.broadcast_message(
                 await self.moderator.game_over_announcement(winner)
             )
+            self.display_game_over(winner)
         return winner
+
+    def display_game_over(self, winner: str) -> None:
+        """打印游戏结果和所有玩家的最终身份。"""
+        GameConsole.banner("三国狼人杀 · 游戏结束")
+        GameConsole.system(MessageType.RESULT, f"胜负结果：{winner}")
+        GameConsole.role_table(
+            list(self.roles),
+            self.roles,
+            reveal_roles=True,
+            title="最终身份",
+        )
 
     async def run_game(self) -> str:
         """运行完整游戏并返回胜方或平局。"""
         await self.setup_game()
         for round_num in range(1, self.config.max_rounds + 1):
-            GameConsole.system(MessageType.PHASE, f"第{round_num}轮游戏开始")
+            GameConsole.section(f"第 {round_num} 夜", "夜间行动")
             await self.broadcast_message(
                 await self.moderator.night_announcement(round_num)
             )
@@ -309,11 +356,17 @@ class ThreeKingdomsWerewolfGame:
             if hunter_shot and hunter_shot not in night_deaths:
                 night_deaths.append(hunter_shot)
             self.update_alive_players(night_deaths)
+            GameConsole.round_summary(
+                f"第 {round_num} 夜结算",
+                night_deaths,
+                [player.name for player in self.alive_players],
+            )
 
             winner = await self._announce_winner_if_any()
             if winner:
                 return winner
 
+            GameConsole.section(f"第 {round_num} 天", "白天行动")
             voted_out = await self.day.day_phase(round_num)
             hunter_shot = await self.day.hunter_phase(
                 voted_out,
@@ -324,17 +377,19 @@ class ThreeKingdomsWerewolfGame:
                 dict.fromkeys(player for player in [voted_out, hunter_shot] if player)
             )
             self.update_alive_players(day_deaths)
+            GameConsole.round_summary(
+                f"第 {round_num} 天结算",
+                day_deaths,
+                [player.name for player in self.alive_players],
+            )
 
             winner = await self._announce_winner_if_any()
             if winner:
                 return winner
-            GameConsole.system(
-                MessageType.STATE,
-                f"第{round_num}轮结束，存活玩家：{util.format_player_list(self.alive_players)}",
-            )
 
         draw_result = "平局：达到最大轮数仍未分出胜负"
         await self.broadcast_message(
             await self.moderator.game_over_announcement(draw_result)
         )
+        self.display_game_over(draw_result)
         return "平局"

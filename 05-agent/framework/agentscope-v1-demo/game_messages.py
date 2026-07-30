@@ -1,6 +1,10 @@
 """游戏消息分类和控制台展示工具。"""
 
+from collections.abc import Mapping, Sequence
 from enum import StrEnum
+
+WIDE_DIVIDER = "═" * 40
+THIN_DIVIDER = "─" * 40
 
 
 class MessageType(StrEnum):
@@ -30,6 +34,58 @@ class MessageVisibility(StrEnum):
 
 class GameConsole:
     """按照发送方和消息类型统一展示控制台信息。"""
+
+    @classmethod
+    def banner(cls, title: str) -> None:
+        """打印游戏开始或结束横幅。"""
+        print(f"\n{WIDE_DIVIDER}\n{title.center(32)}\n{WIDE_DIVIDER}\n")
+
+    @classmethod
+    def section(cls, title: str, subtitle: str | None = None) -> None:
+        """打印具有明确边界的游戏阶段标题。"""
+        label = f"{title} · {subtitle}" if subtitle else title
+        print(f"\n┌{THIN_DIVIDER}┐\n│ {label}\n└{THIN_DIVIDER}┘\n")
+
+    @classmethod
+    def role_table(
+        cls,
+        player_names: Sequence[str],
+        roles: Mapping[str, str],
+        reveal_roles: bool,
+        title: str = "角色总览",
+    ) -> None:
+        """打印玩家名单，并按配置决定是否展示真实身份。"""
+        print(f"\n{THIN_DIVIDER}\n{title}\n{THIN_DIVIDER}")
+        if not player_names:
+            print("暂无玩家")
+        for index, player_name in enumerate(player_names, start=1):
+            role = roles.get(player_name, "未知") if reveal_roles else "未公开"
+            print(f"  {index:02d}. {player_name:<8} {role}")
+        print(f"{THIN_DIVIDER}\n")
+
+    @classmethod
+    def round_summary(
+        cls,
+        title: str,
+        dead_players: Sequence[str],
+        alive_players: Sequence[str],
+    ) -> None:
+        """打印昼夜结算后的死亡与存活玩家摘要。"""
+        dead_text = "、".join(dead_players) if dead_players else "无人死亡"
+        alive_text = "、".join(alive_players) if alive_players else "无人存活"
+        print(
+            f"\n{THIN_DIVIDER}\n"
+            f"{title}\n"
+            f"死亡玩家：{dead_text}\n"
+            f"存活玩家：{alive_text}\n"
+            f"当前人数：{len(alive_players)}\n"
+            f"{THIN_DIVIDER}\n"
+        )
+
+    @staticmethod
+    def visible_content(content: str, reveal_private: bool) -> str:
+        """根据观战模式返回原始私密内容或统一脱敏文案。"""
+        return content if reveal_private else "内容已隐藏"
 
     @staticmethod
     def _format(
