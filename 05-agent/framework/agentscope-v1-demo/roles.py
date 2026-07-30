@@ -1,4 +1,4 @@
-from typing import List
+from collections.abc import Sequence
 
 from agentscope.agent import AgentBase
 from agentscope.message import Msg
@@ -87,7 +87,7 @@ class GameRoles:
         return cls.ROLES.get(role, {}).get("team") == "好人阵营"
 
     @classmethod
-    def get_standard_setup(cls, player_count: int) -> List[str]:
+    def get_standard_setup(cls, player_count: int) -> list[str]:
         """获取标准角色配置"""
         if player_count == 6:
             return ["狼人", "狼人", "预言家", "女巫", "村民", "村民"]
@@ -134,7 +134,7 @@ class GameModerator(AgentBase):
     def __init__(self) -> None:
         super().__init__()
         self.name = "游戏主持人"
-        self.game_log: List[str] = []
+        self.game_log: list[str] = []
 
     async def announce(
         self,
@@ -170,7 +170,7 @@ class GameModerator(AgentBase):
         content = f"第{round_num}天天亮了，请大家睁眼"
         return await self.announce(content, MessageType.PHASE)
 
-    async def death_announcement(self, dead_players: List[str]) -> Msg:
+    async def death_announcement(self, dead_players: Sequence[str]) -> Msg:
         """死亡公告"""
         if not dead_players:
             content = "昨夜平安无事，无人死亡。"
@@ -178,9 +178,16 @@ class GameModerator(AgentBase):
             content = f"昨夜，{util.format_player_list_str(dead_players)}不幸遇害。"
         return await self.announce(content, MessageType.RESULT)
 
-    async def vote_result_announcement(self, voted_out: str, vote_count: int) -> Msg:
+    async def vote_result_announcement(
+        self,
+        voted_out: str | None,
+        vote_count: int,
+    ) -> Msg:
         """投票结果公告"""
-        content = f"投票结果：{voted_out}以{vote_count}票被淘汰出局。"
+        if voted_out is None:
+            content = f"投票平票或无有效票，本轮无人出局。最高票数：{vote_count}。"
+        else:
+            content = f"投票结果：{voted_out}以{vote_count}票被淘汰出局。"
         return await self.announce(content, MessageType.RESULT)
 
     async def game_over_announcement(self, winner: str) -> Msg:

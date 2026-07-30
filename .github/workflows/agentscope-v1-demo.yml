@@ -1,0 +1,38 @@
+name: AgentScope V1 Demo
+
+on:
+  push:
+    paths:
+      - "05-agent/framework/agentscope-v1-demo/**"
+      - ".github/workflows/agentscope-v1-demo.yml"
+  pull_request:
+    paths:
+      - "05-agent/framework/agentscope-v1-demo/**"
+      - ".github/workflows/agentscope-v1-demo.yml"
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: 05-agent/framework/agentscope-v1-demo
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - name: Install dependencies
+        run: uv sync --dev --locked
+      - name: Run tests
+        run: uv run pytest -q
+      - name: Run Ruff
+        run: uv run ruff check .
+      - name: Check formatting
+        run: uv run ruff format --check .
+      - name: Run Pyright
+        run: uv run pyright
+      - name: Run Mypy
+        run: uv run mypy
+      - name: Compile Python sources
+        run: uv run python -m compileall -q .

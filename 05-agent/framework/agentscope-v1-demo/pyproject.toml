@@ -1,9 +1,57 @@
 [project]
 name = "agentscope-v1-demo"
 version = "0.1.0"
-description = "Add your description here"
+description = "基于 AgentScope 的三国主题狼人杀多智能体演示"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "agentscope>=1,<2",
 ]
+
+[dependency-groups]
+dev = [
+    "mypy>=1.16,<2",
+    "pyright>=1.1,<2",
+    "pytest>=8.3,<9",
+    "pytest-asyncio>=0.24,<2",
+    "ruff>=0.15,<0.16",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+asyncio_mode = "auto"
+
+[tool.mypy]
+check_untyped_defs = true
+ignore_missing_imports = true
+files = [
+    "config.py",
+    "day_phases.py",
+    "game.py",
+    "game_messages.py",
+    "main.py",
+    "night_phases.py",
+    "output.py",
+    "prompt.py",
+    "roles.py",
+    "util.py",
+]
+
+[tool.pyright]
+include = [
+    "config.py",
+    "day_phases.py",
+    "game.py",
+    "game_messages.py",
+    "main.py",
+    "night_phases.py",
+    "output.py",
+    "prompt.py",
+    "roles.py",
+    "util.py",
+]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 88

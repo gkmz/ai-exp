@@ -1,13 +1,11 @@
 import random
 from collections import Counter
+from collections.abc import Mapping, Sequence
 from typing import Any, Dict, List, Optional
 
 from agentscope.agent import ReActAgent
 from agentscope.message import Msg
 
-# 游戏常量
-MAX_GAME_ROUND = 10
-MAX_DISCUSSION_ROUND = 3
 CHINESE_NAMES = [
     "刘备",
     "关羽",
@@ -50,24 +48,36 @@ def format_player_list(players: list[ReActAgent], show_roles: bool = False) -> s
         return "、".join([p.name for p in players])
 
 
-def majority_vote_cn(votes: Dict[str, str]) -> tuple[str, int]:
-    """中文版多数投票统计"""
-    if not votes:
-        return "无人", 0
+def majority_vote_cn(
+    votes: Mapping[str, str | None],
+) -> tuple[str | None, int]:
+    """统计有效票；平票或无人获得有效票时返回无人出局。"""
+    valid_targets = [target for target in votes.values() if target is not None]
+    if not valid_targets:
+        return None, 0
 
-    # 统计票数
-    vote_counts = Counter(votes.values())
-    # 选取票数最多的，如果票数相同，选出最早出现的
-    most_voted = vote_counts.most_common(1)[0]
+    vote_counts = Counter(valid_targets)
+    highest_count = max(vote_counts.values())
+    highest_targets = [
+        target for target, count in vote_counts.items() if count == highest_count
+    ]
+    if len(highest_targets) != 1:
+        return None, highest_count
 
-    return most_voted[0], most_voted[1]
+    return highest_targets[0], highest_count
 
 
 def check_winning_cn(
-    alive_players: List[ReActAgent], roles: Dict[str, str]
+    alive_players: Sequence[ReActAgent], roles: Mapping[str, str]
 ) -> Optional[str]:
-    """检查中文版游戏胜利条件"""
-    alive_roles = [roles.get(p.name, "村民") for p in alive_players]
+    """检查游戏胜利条件"""
+    missing_players = [
+        player.name for player in alive_players if player.name not in roles
+    ]
+    if missing_players:
+        raise ValueError(f"缺少玩家角色信息：{', '.join(missing_players)}")
+
+    alive_roles = [roles[player.name] for player in alive_players]
     werewolf_count = alive_roles.count("狼人")
     villager_count = len(alive_roles) - werewolf_count
 
@@ -111,7 +121,7 @@ def analyze_speech_pattern(speech: str) -> Dict[str, Any]:
     return analysis
 
 
-def format_player_list_str(players: List[str]) -> str:
+def format_player_list_str(players: Sequence[str]) -> str:
     """格式化玩家姓名列表"""
     if not players:
         return "无人"
