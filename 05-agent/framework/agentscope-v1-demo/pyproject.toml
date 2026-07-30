@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "agentscope>=1,<2",
+    "pillow>=11,<12",
 ]
 
 [dependency-groups]
@@ -36,7 +37,9 @@ files = [
     "output.py",
     "prompt.py",
     "roles.py",
+    "share_cards",
     "util.py",
+    "export_cards.py",
 ]
 
 [tool.pyright]
@@ -51,7 +54,9 @@ include = [
     "output.py",
     "prompt.py",
     "roles.py",
+    "share_cards",
     "util.py",
+    "export_cards.py",
 ]
 
 [tool.ruff]
