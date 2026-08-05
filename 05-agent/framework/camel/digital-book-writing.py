@@ -3,7 +3,6 @@ import os
 from camel.models import ModelFactory
 from camel.societies import RolePlaying
 from camel.types import ModelPlatformType
-from camel.utils import print_text_animated
 from colorama import Fore
 from dotenv import load_dotenv
 
@@ -51,8 +50,8 @@ while n < chat_turn_limit:
     n += 1
     assistant_response, user_response = role_play_session.step(input_msg)
 
-    print_text_animated(Fore.BLUE + f"作家:\n\n{user_response.msg.content}\n")
-    print_text_animated(Fore.GREEN + f"心理学家:\n\n{assistant_response.msg.content}\n")
+    print(Fore.BLUE + f"作家:\n\n{user_response.msg.content}\n")
+    print(Fore.GREEN + f"心理学家:\n\n{assistant_response.msg.content}\n")
 
     # 检查任务完成标志
     if "CAMEL_TASK_DONE" in user_response.msg.content:
