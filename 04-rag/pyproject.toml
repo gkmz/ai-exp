@@ -13,6 +13,7 @@ dependencies = [
     "langchain-openai>=1.6.0",
     "langchain-text-splitters>=1.1.2",
     "langgraph>=1.2.11",
+    "numpy>=2.4.2",
     "pypdf>=6.17.0",
     "python-dotenv>=1.2.3",
     "tiktoken>=0.14.0",
@@ -23,3 +24,6 @@ dev = [
     "pytest>=9.1.1",
     "ruff>=0.16.6",
 ]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
