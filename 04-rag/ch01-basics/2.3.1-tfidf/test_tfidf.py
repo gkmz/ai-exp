@@ -1,8 +1,7 @@
 import math
 
 import pytest
-
-from rag_study.experiments.tfidf import TfidfVectorizer
+from tfidf import TfidfVectorizer
 
 
 def test_fit_builds_vocabulary_and_document_frequencies():

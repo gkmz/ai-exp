@@ -1,4 +1,4 @@
-from rag_study.experiments.embedding import BagOfWordsVectorizer
+from embedding import BagOfWordsVectorizer
 
 
 def test_fit_builds_vocabulary_in_first_seen_order():

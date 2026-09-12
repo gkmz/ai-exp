@@ -1,6 +1,5 @@
 import pytest
-
-from rag_study.experiments.vector_similarity import (
+from vector_similarity import (
     cosine_similarity,
     dot_product,
     euclidean_distance,
