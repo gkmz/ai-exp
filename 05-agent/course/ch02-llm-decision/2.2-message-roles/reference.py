@@ -1,4 +1,5 @@
 """2.2 消息角色示例参考实现（不调用真实模型 API）。"""
+
 from typing import Any
 
 ALLOWED_ROLES = {"system", "user", "assistant", "tool"}
@@ -9,7 +10,10 @@ def build_messages() -> list[dict[str, Any]]:
     return [
         {"role": "system", "content": "你是严谨的天气助手，只使用工具返回的事实。"},
         {"role": "user", "content": "明天北京会下雨吗？"},
-        {"role": "assistant", "tool_calls": [{"id": "call_1", "name": "get_weather", "arguments": {"city": "北京"}}]},
+        {
+            "role": "assistant",
+            "tool_calls": [{"id": "call_1", "name": "get_weather", "arguments": {"city": "北京"}}],
+        },
         {"role": "tool", "tool_call_id": "call_1", "content": "降雨概率 80%"},
     ]
 
