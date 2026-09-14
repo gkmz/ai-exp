@@ -48,7 +48,8 @@ def test_service_rejects_empty_inputs():
 
 def test_openai_service_requires_embedding_model_configuration(monkeypatch):
     """验证缺少模型名时给出可理解的配置错误。"""
-    # 显式覆盖本地 .env，避免开发机配置影响缺少配置的测试。
+    # 禁止测试读取本地 .env，避免开发机配置影响缺少配置的测试。
+    monkeypatch.setattr("embedding_model.load_dotenv", lambda *args, **kwargs: None)
     monkeypatch.setenv("OPENAI_EMBEDDING_MODEL", "")
 
     with pytest.raises(ValueError, match="OPENAI_EMBEDDING_MODEL"):

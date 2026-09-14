@@ -19,4 +19,10 @@
 uv run pytest 2.2.1-real-embedding
 ```
 
+运行真实 Embedding 示例：
+
+```bash
+uv run python ch02-vector-and-embedding/2.2.1-real-embedding/embedding_model.py
+```
+
 真实调用需要先在 `04-rag/.env` 中配置 Embedding 模型相关环境变量。
