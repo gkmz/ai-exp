@@ -32,8 +32,8 @@ def euclidean_distance(first: Vector, second: Vector) -> float:
 def cosine_similarity(first: Vector, second: Vector) -> float:
     """使用纯 Python 计算两个向量的余弦相似度。"""
     _validate_dimensions(first, second)
-    first_norm = math.sqrt(sum(value**2 for value in first))
-    second_norm = math.sqrt(sum(value**2 for value in second))
+    first_norm = math.sqrt(sum(value ** 2 for value in first))
+    second_norm = math.sqrt(sum(value ** 2 for value in second))
     if first_norm == 0 or second_norm == 0:
         raise ValueError("零向量没有可定义的余弦相似度")
     # 余弦相似度等于点积除以两个向量模长的乘积。
