@@ -73,7 +73,7 @@ def apply_decision(state: AgentState, decision: Decision) -> AgentState:
     elif decision.action == "finish":
         return replace(state,
                        step=state.step + 1,
-                       status="finish",
+                       status="completed",
                        pending_tool=None,
                        final_answer=decision.answer
                        )
